@@ -1,0 +1,205 @@
+// Implementation of the File System ADT
+// COMP2521 Assignment 1
+
+// Written by: Chris
+// Date: 25th Oct
+
+#include <assert.h>
+#include <ctype.h>
+#include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include "FileType.h"
+#include "Fs.h"
+#include "utility.h"
+
+struct FileRep {
+    Files parent;
+    Files children;
+    Files sibling;
+    char current_name[PATH_MAX + 1];
+    int height;
+    int dir; 
+};
+
+struct FsRep {
+    Files root;    
+    Files current;
+};
+
+Fs FsNew(void) {
+    // TODO
+    Files root = FileNew(NULL, NULL, NULL, "/", 0, 1); 
+    root->parent = root;  
+    Fs home = malloc(sizeof(struct FsRep));    
+    home->root = root;
+    home->current = root;
+    return home;
+}
+
+void FsGetCwd(Fs fs, char cwd[PATH_MAX + 1]) {
+    // TODO 
+    FsGetCwdRec(fs->current, cwd);        
+}
+
+void FsFree(Fs fs) {
+    // TODO
+    free(fs);
+}
+
+void FsCheckRegular(Fs fs, char *path) {  //REMOVE LATER
+    //int result = checkRegular(fs->current, path);
+    //printf("%d\n", result);
+}
+
+void FsMkdir(Fs fs, char *path) {
+    // TODO     
+    //Check if prefix of path contains regular file  
+         
+    if (checkRegular(fs, path) != 1) {
+        printf("mkfile: cannot create file '%s': Not a directory\n", path);
+        return;
+    } 
+    //Check if prefix path exists 
+    //printf("Runs\n");
+    
+    if (checkProper(fs, path) != 1) {
+        printf("mkfile: cannot create file '%s': No such file or directory\n"
+            , path
+        );
+        return;
+    }    
+    //printf("Runs1\n");
+    
+    
+    
+    //Check if dir already exists
+    if (checkDuplicate(fs, path) != 1) {
+        printf("mkdir: cannot create directory '%s': File exists", path);
+        return;
+    }
+    //If not, return null. Otherwise return node/file to be inserted 
+    //Insert    
+    //printf("inserting file\n");
+    FindInsert(fs, path);
+    //printf("file inserted\n");
+    //
+}
+
+void FsMkfile(Fs fs, char *path) {
+    // TODO
+    //Check if prefix of path contains regular file  
+    if (checkRegular(fs, path) != 1) {
+        printf("mkfile: cannot create file '%s': Not a directory\n", path);
+        return;
+    } 
+    //Check if prefix path exists 
+    //printf("Runs\n");     
+    
+    //Check if prefix path exists 
+    //printf("Runs\n");
+    
+    if (checkProper(fs, path) != 1) {
+        printf("mkfile: cannot create file '%s': No such file or directory\n"
+            , path
+        );
+        return;
+    }
+    
+    //Check if dir already exists
+    if (checkDuplicate(fs, path) != 1) {
+        printf("mkdir: cannot create directory '%s': File exists", path);
+        return;
+    }
+    FindInsertFile(fs, path);
+}
+
+void FsCd(Fs fs, char *path) {
+    // TODO            
+    char prefixPath[PATH_MAX + 1];
+    strcpy(prefixPath, path);    
+    printf("prefixpath is %s\n", prefixPath);    
+    Files current = fs->current->children;
+    Files prev = current;
+    char limit[2] = "/";
+    char *token;
+    token = strtok(prefixPath, limit);
+    while (token != NULL) {
+        if (!strcmp(token, "..")) {
+            current = prev;
+            //printf("reached1\n");
+        } else if (strcmp(token, ".")) {
+            //printf("reached2\n");
+            if (current != NULL) {
+                while (current != NULL) {
+                    //printf("current is %s\n", current->current_name);
+                    if (current == fs->root) {
+                        prev = current;
+                        current = fs->root->children;
+                    }
+                    if (!strcmp(token, current->current_name)) {
+                        //printf("reached3\n");
+                        prev = current;
+                        current = current->children;
+                        break;
+                    } else {
+                        current = current->sibling;
+                        if (current == NULL) {
+                            printf("cd: '%s': No such file or directory\n", path);
+                            return;
+                        }
+                    }
+                }            
+            } else { //if current == NULL
+            //printf("why?\n");
+                printf("cd: '%s': No such file or directory\n", path);
+                return;                        
+            }    
+        }                
+        token = strtok(NULL, limit);
+        //printf("checking token %s\n", token);
+    }
+    fs->current = prev;
+    return;
+}
+
+void FsLs(Fs fs, char *path) {
+    // TODO
+}
+
+void FsPwd(Fs fs) {
+    // TODO
+}
+
+void FsTree(Fs fs, char *path) {
+    // TODO
+    printf("%s\n", fs->current->current_name);
+    FsTreeRec(fs->current->children, path);
+}
+
+void FsPut(Fs fs, char *path, char *content) {
+    // TODO
+}
+
+void FsCat(Fs fs, char *path) {
+    // TODO
+}
+
+void FsDldir(Fs fs, char *path) {
+    // TODO
+}
+
+void FsDl(Fs fs, bool recursive, char *path) {
+    // TODO
+}
+
+void FsCp(Fs fs, bool recursive, char *src[], char *dest) {
+    // TODO
+}
+
+void FsMv(Fs fs, char *src[], char *dest) {
+    // TODO
+}
+

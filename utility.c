@@ -1,0 +1,404 @@
+// COMP2521 Assignment 1
+
+// Written by:
+// Date:
+
+#include <assert.h>
+#include <ctype.h>
+#include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include "FileType.h"
+#include "utility.h"
+#include "Fs.h"
+
+struct FileRep {
+    Files parent;
+    Files children;
+    Files sibling;
+    char current_name[PATH_MAX + 1];
+    int height;
+    int dir;
+};
+
+struct FsRep {
+    Files root;    
+    Files current;
+};
+
+// implement the functions declared in utility.h here
+
+
+
+void FindInsertFile(Fs fs, char *path) {
+
+    Files current = fs->current;
+    Files insert = current;
+    char oldpath[PATH_MAX + 1];
+    strcpy(oldpath, path);
+    //printf("oldpath is %s\n", oldpath);
+    char *lastdash = strrchr(oldpath, '/');
+    char *newname = lastdash + 1;
+
+    if (lastdash == NULL) {
+        //printf("last dash is null\n");
+        Files newfile = FileNew(insert->parent, NULL, NULL, path, insert->height + 1, 0);    
+        insert->children = InsertChildrenAlpha(insert->children, newfile);
+    } else { 
+        //printf("newname is %s\n", newname);
+        //printf("old path is %s\n", oldpath);
+        char limit[2] = "/";
+        char *token;
+        token = strtok(oldpath, limit);
+        current = current->children;
+        while (token != newname && token != NULL && token != lastdash) {
+            //printf("Token checked is %s\n", token);
+            if (!strcmp(token, "..")) {
+            current = insert;
+            //printf("reached1\n");
+            } else if (strcmp(token, ".")) {
+                while (current != NULL) {
+                    if (current == fs->root) {
+                        current = fs->root->children;
+                    }                       
+                    if (!strcmp(current->current_name, token)) {
+                                //printf("reached\n");
+                        insert = current;
+                        current = current->children;                    
+                        break;
+                    } else {
+                        current = current->sibling;
+                    }                 
+                } 
+            }                     
+            token = strtok(NULL, limit);
+            //printf("Token checked is %s\n", token);
+            //printf("Newname is %s\n", newname);
+        }
+        //printf("reached?\n");
+        //printf("insert is %s\n", insert->current_name);
+        Files newfile = FileNew(insert, NULL, NULL, newname, insert->height + 1, 0);
+        //printf("nope?\n");
+        insert->children = InsertChildrenAlpha(insert->children, newfile);
+     }   
+}
+
+void FindInsert(Fs fs, char *path) {
+    Files current = fs->current;
+    Files insert = current;
+    char oldpath[PATH_MAX + 1];
+    strcpy(oldpath, path);
+    //printf("oldpath is %s\n", oldpath);
+    char *lastdash = strrchr(oldpath, '/');
+    char *newname = lastdash + 1;
+    if (lastdash == NULL) {
+        //printf("last dash is null\n");
+        Files newfile = FileNew(insert->parent, NULL, NULL, path, insert->height + 1, 1);    
+        insert->children = InsertChildrenAlpha(insert->children, newfile);
+    } else { 
+        //printf("newname is %s\n", newname);
+        //printf("old path is %s\n", oldpath);
+        char limit[2] = "/";
+        char *token;
+        token = strtok(oldpath, limit);
+        current = current->children;
+        while (token != newname && token != NULL && token != lastdash) {
+            //printf("Token checked is %s\n", token);
+            if (!strcmp(token, "..")) {
+                current = insert;
+                //printf("reached1\n");
+            } else if (strcmp(token, ".")) {
+                while (current != NULL) {
+                    if (current == fs->root) {
+                        current = fs->root->children;
+                    }                       
+                    if (!strcmp(current->current_name, token)) {
+                                //printf("reached\n");
+                        insert = current;
+                        current = current->children;                    
+                        break;
+                    } else {
+                        current = current->sibling;
+                    }                 
+                } 
+            }                     
+            token = strtok(NULL, limit);
+            //printf("Token checked is %s\n", token);
+            //printf("Newname is %s\n", newname);
+        }
+        //printf("reached?\n");
+        //printf("insert is %s\n", insert->current_name);
+        Files newfile = FileNew(insert, NULL, NULL, newname, insert->height + 1, 1);
+        //printf("nope?\n");
+        insert->children = InsertChildrenAlpha(insert->children, newfile);
+    }       
+}
+
+
+
+int checkRegular(Fs fs, char *path) { //Assumes proper prefix of path exists 
+    char prefixPath[PATH_MAX + 1];
+    //printf("path is %s\n", path);
+    strcpy(prefixPath, path);
+        //printf("prefix path is %s\n", prefixPath);
+    char limit[2] = "/";
+    char *token;
+    char *lastdash = strrchr(prefixPath, '/');
+    char *lastname = lastdash + 1;
+    
+    Files current = fs->current->children;
+    Files prev = current;
+    token = strtok(prefixPath, limit);
+    //printf("prefix path is %s\n", prefixPath);                   
+    while (token != lastname && token != NULL && lastdash != NULL) {    
+    //printf("%s\n", token);    
+        //printf("Reached\n");
+        if (!strcmp(token, "..")) {
+            current = prev;
+            //printf("reached1\n");
+        } else if (strcmp(token, ".")) {
+            //printf("reached2\n");
+            while (current != NULL) {
+            //printf("last name is %s\n", lastname);
+                if (current == fs->root) {
+                    prev = current;
+                    current = fs->root->children;
+                }
+                if (strcmp(token, current->current_name) != 0) {
+            //printf("currrent is %s\n", current->current_name);
+                    current = current->sibling; 
+                //printf("reached\n");            
+                } else if (current->dir) {
+                    prev = current;
+                    current = current->children; 
+                    break;
+                //printf("nononon\n");
+                } else {
+                //printf("dir is %d\n", current->dir);
+               //printf("currrent is %s\n", current->current_name);     
+                    return 0;
+                }                              
+            }                                         
+        }        
+        token = strtok(NULL, limit); 
+        
+        //printf("Token is %s\n", token);   
+    }
+    return 1;
+}
+
+int checkProper(Fs fs, char *path) {
+    char prefixPath[PATH_MAX + 1];
+    strcpy(prefixPath, path);    
+    //printf("prefixpath is %s\n", prefixPath);
+    char *lastdash = strrchr(prefixPath, '/');
+    char *lastname = lastdash + 1;
+    if (lastdash != NULL) {
+        //printf("triggered\n");
+        int length = strlen(prefixPath);
+        char *lastchar = &prefixPath[length - 1];        
+        if (lastdash == lastchar) {
+            printf("fuck u \n");
+            return 0;
+        }
+    }
+    Files current = fs->current->children;
+    Files prev = current;
+    char limit[2] = "/";
+    char *token;
+    token = strtok(prefixPath, limit);
+    //printf("checking token %s\n", token);
+    while (token != lastname && lastdash != NULL && token != NULL) {
+        if (!strcmp(token, "..")) {
+            current = prev;
+            //printf("prev is %s\n", prev->current_name);
+            //printf("reached1\n");
+        } else if (strcmp(token, ".")) {
+            //printf("reached2\n");
+            if (current != NULL) {
+                while (current != NULL) {
+                    //printf("current is %s\n", current->current_name);
+                    if (current == fs->root) {
+                        prev = current;
+                        //printf("prev is %s\n", prev->current_name);
+                        current = fs->root->children;
+                    }
+                    if (!strcmp(token, current->current_name)) {
+                        //printf("reached3\n");
+                        prev = current;
+                        //printf("prev is %s\n", prev->current_name);
+                        current = current->children;
+                        break;
+                    } else {
+                        current = current->sibling;
+                        if (current == NULL) {
+                            return 0;
+                        }
+                    }
+                }            
+            } else { //if current == NULL
+            //printf("why?\n");
+            return 0; //For now return when can't compare token and current (null)
+                      // later break when checking .. and .            
+            }    
+        }                
+        token = strtok(NULL, limit);
+        //printf("checking token %s\n", token);
+    }
+    
+    
+    return 1;
+}
+
+
+int checkDuplicate(Fs fs, char *path) {    
+    char prefixPath[PATH_MAX + 1];
+    strcpy(prefixPath, path);    
+    //printf("prefixpath is %s\n", prefixPath);
+    char *lastdash = strrchr(prefixPath, '/');
+    char *lastname = lastdash + 1;
+    Files current = fs->current->children;
+    Files prev = current;
+    char limit[2] = "/";
+    char *token;
+    token = strtok(prefixPath, limit);
+    //printf("checking token %s\n", token);
+    while (token != lastname && lastdash != NULL && token != NULL) {
+        if (!strcmp(token, "..")) {
+            current = prev;
+            //printf("reached1\n");
+        } else if (strcmp(token, ".")) {
+            //printf("reached2\n");
+            if (current != NULL) {
+                while (current != NULL) {
+                    //printf("current is %s\n", current->current_name);
+                    if (current == fs->root) {
+                        prev = current;
+                        current = fs->root->children;
+                    }
+                    if (!strcmp(token, current->current_name)) {
+                        //printf("reached3\n");
+                        prev = current;
+                        current = current->children;
+                        break;
+                    } else {
+                        current = current->sibling;
+                        if (current == NULL) {
+                            return 0;
+                        }
+                    }
+                }            
+            } else { //if current == NULL
+            //printf("why?\n");
+            return 0; //For now return when can't compare token and current (null)
+                      // later break when checking .. and .            
+            }    
+        }                
+        token = strtok(NULL, limit);
+        //printf("checking token %s\n", token);
+    }   
+    //printf("reached?\n"); 
+    if (current == NULL) {
+        return 1;       
+    } else {
+        while (current != NULL) {
+            //printf("yeet\n");
+            if (lastdash == NULL) {
+                if (!strcmp(current->current_name, token)) {
+                    //printf("done\n");
+                    return 0; 
+                //last name ios nulll
+                } else {
+                    current = current->sibling;
+                }
+            } else {
+                if (!strcmp(current->current_name, lastname)) {
+                    //printf("nope\n");
+                    return 0; 
+                    //last name ios nulll
+                } else {
+                    current = current->sibling;
+                }    
+            }            
+        }
+        return 1;
+    }
+}
+
+void FsGetCwdRec(Files file, char *cwd) {
+    if (!strcmp(file->current_name, "/")) {
+        strcpy(cwd, "/");
+        return;
+    }   
+    FsGetCwdRec(file->parent, cwd);    
+    strcat(cwd, file->current_name);      
+}
+
+void FsTreeRec(Files newfile, char *path) {
+    if (newfile == NULL) {
+        return;
+    }
+    int n = newfile->height * 4;
+    printf("%*c", n, ' ');
+    printf("%s\n", newfile->current_name); 
+    FsTreeRec(newfile->children, path);    
+    FsTreeRec(newfile->sibling, path);       
+}
+
+Files FileNew(Files parent, Files children, Files sibling, char *current, int height, int dir
+) {
+    Files newFile = malloc(sizeof(struct FileRep));
+    newFile->parent = parent;
+    newFile->children = children;
+    newFile->sibling = sibling;        
+    strcpy(newFile->current_name, current);
+    newFile->height = height;
+    newFile->dir = dir;
+    return newFile;
+}         
+
+Files FsCheckChildren(Files fs, char *cwd) {
+    if (fs == NULL) {
+        return NULL;
+    } else if (!strcmp(fs->current_name, cwd)) {
+        return fs;
+    } 
+    return FsCheckChildren(fs->sibling, cwd);
+}
+
+char *FsCdRec(Files fs, char *path) {    
+    return path;
+    /*if (fs == NULL) {
+        return NULL;
+    } else {
+        int result = strcmp(fs->current, path);
+        if (!result) {
+            return fs;
+        } else {            
+            return FsCdRec(fs->sibling, path);
+        }
+    }*/
+}
+
+//Insert children alphabetically - sibling
+Files InsertChildrenAlpha(Files children, Files newfile) {     
+    if (children == NULL) {
+        newfile->sibling = NULL;
+        return newfile;    
+    } else {
+        int result = strcmp(children->current_name, newfile->current_name);
+        if (result > 0) {
+            newfile->sibling = children;
+            return newfile;
+        } else {            
+            children->sibling = InsertChildrenAlpha(children->sibling, newfile);
+            return children;                              
+        } 
+    }
+    
+}
+
+
+

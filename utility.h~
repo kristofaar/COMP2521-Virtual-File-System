@@ -1,0 +1,42 @@
+// COMP2521 Assignment 1
+
+// Written by:
+// Date:
+
+#ifndef UTILITY_H
+#define UTILITY_H
+
+// add your own #includes, #defines, typedefs, structs and
+// function prototypes here
+typedef struct FsRep *Fs;
+typedef struct FileRep *Files;
+
+int checkRegularFile(Fs fs, char *path);
+
+void FindInsertFile(Fs fs, char *path);
+
+int checkProper(Fs fs, char *path);
+
+void FindInsert(Fs fs, char *path);
+
+int checkRegular(Fs fs, char *path);
+
+int checkDuplicate(Fs fs, char *path);
+
+void FsGetCwdRec(Files file, char *cwd);
+
+Files FindInsertAlpha(Files file, Files newfile);
+
+void FsTreeRec(Files newfile, char *path);
+
+Files FileNew(Files parent, Files children, Files sibling, char *current, int height, int dir);
+
+char *FsCdRec(Files fs, char *path);
+
+Files FsCheckChildren(Files fs, char *cwd);
+
+Files InsertChildrenAlpha(Files children, Files newfile);
+
+int FsCheckChildrenRecurs(Fs fs, char *cwd, char *partcwd);
+#endif
+

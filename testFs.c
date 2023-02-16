@@ -1,0 +1,78 @@
+// Main program for testing the File System ADT
+
+#include <assert.h>
+#include <ctype.h>
+#include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include "Fs.h"
+#include "utility.h"
+
+int main(void) {
+    
+    Fs fs = FsNew();
+	
+	// this is equivalent to FsMkdir(fs, "tmp"); because initially,
+	// the current working directory is the root directory
+	
+	//FsMkdir(fs, "/tmp/tmp.123");
+	/*
+	FsMkdir(fs, "././f");	
+	FsMkdir(fs, ".././c");	
+	FsMkdir(fs, "c/./d");	
+	
+	FsMkdir(fs, "../../../f/d");
+	
+	FsMkdir(fs, "f/d/.././e/f");	
+		*/	
+	
+    FsMkdir(fs, "/f/e");
+    	
+    FsMkdir(fs, "b");
+    FsMkdir(fs, "b/a");    
+    FsMkdir(fs, "/b/.././a/c");	
+    FsMkdir(fs, "../b/a/p");    
+    FsMkdir(fs, "b/a/p/c"); 
+    FsMkdir(fs, "b/a/a");				
+    FsMkdir(fs, "/d"); 
+    
+    FsMkdir(fs, "c");
+    FsMkdir(fs, "/");
+    //FsMkfile(fs, "b/a");	
+    FsTree(fs, NULL);
+    FsCd(fs, "c");
+    FsMkdir(fs, "e");
+    //FsFree(fs);
+    //printf("%d\n", checkDuplicate(fs, "dc"));	
+    //printf("%d\n", checkRegular(fs, "../../f/c"));		    
+    //printf("%d\n", checkRegular(fs, "/b/g/p"));		    
+	//printf("%d\n", checkProper(fs, "/b/a/c"));
+	// see the section for FsTree for details
+
+	
+	//printList(fs);
+	
+	/*
+	FsMkdir(fs, "abc");
+	FsCd(fs, "abc");
+	FsGetCwd(fs, cwd);
+	printf("cwd: %s\n", cwd);*/
+/*
+    Fs fs = FsNew();
+	FsMkfile(fs, "hello.txt");
+	FsMkfile(fs, "world.txt");
+	FsMkdir(fs, "bin");
+	FsMkfile(fs, "bin/ls");
+	FsMkfile(fs, "bin/pwd");
+	FsMkdir(fs, "home");
+	FsMkdir(fs, "home/jas");
+	FsMkfile(fs, "home/jas/todo.txt");
+	FsMkfile(fs, "home/jas/mail.txt");
+	FsTree(fs, "/home/jas");
+	printf("---\n"); // marker to separate output
+	FsTree(fs, NULL);
+    FsFree(fs); */
+}
+
